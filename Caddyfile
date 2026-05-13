@@ -1,0 +1,19 @@
+# Remplace api.parisjetaime.com par ton vrai domaine
+api.parisjetaime.com {
+    # SSL automatique via Let's Encrypt
+    reverse_proxy api:8000
+
+    # Headers de sécurité
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    # Logs
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

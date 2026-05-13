@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+data/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+*.md
+migrate.py
+mcp_server.py
