@@ -1,0 +1,85 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create deployment archive
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.env' \
+            --exclude='myenv' \
+            --exclude='venv' \
+            --exclude='__pycache__' \
+            -czf release.tar.gz .
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload project to VPS
+        run: |
+          scp -i ~/.ssh/deploy_key release.tar.gz ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release.tar.gz
+
+      - name: Deploy on VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            set -e
+
+            PROJECT_PATH="${{ secrets.PROJECT_PATH }}"
+
+            if [ -z "$PROJECT_PATH" ]; then
+              echo "PROJECT_PATH is empty"
+              exit 1
+            fi
+
+            case "$PROJECT_PATH" in
+              /opt/*) ;;
+              *)
+                echo "PROJECT_PATH must be inside /opt"
+                exit 1
+                ;;
+            esac
+
+            mkdir -p "$PROJECT_PATH"
+            cd "$PROJECT_PATH"
+
+            if [ "$PWD" != "$PROJECT_PATH" ]; then
+              echo "Wrong deployment directory"
+              exit 1
+            fi
+
+            find . -mindepth 1 -maxdepth 1 \
+              ! -name '.env' \
+              ! -name 'data' \
+              -exec rm -rf {} +
+
+            tar -xzf /tmp/release.tar.gz -C "$PROJECT_PATH"
+            rm -f /tmp/release.tar.gz
+
+            docker compose up -d --build --remove-orphans
+
+            docker compose ps
+
+            sleep 5
+
+            curl -f http://localhost:8000/health || true
+          EOF
