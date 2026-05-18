@@ -751,5 +751,5 @@ async def paris_get_stats(ctx: Context) -> str:
 # ── Lancement ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    _log("startup", {"transport": "streamable-http", "host": MCP_HOST, "port": MCP_PORT})
-    mcp.run(transport="streamable-http", host=MCP_HOST, port=MCP_PORT)
+    _log("startup", {"transport": "http", "host": MCP_HOST, "port": MCP_PORT})
+    mcp.run(transport="http", host=MCP_HOST, port=MCP_PORT)
