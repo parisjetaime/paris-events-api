@@ -128,5 +128,3 @@ Ajouter dans `claude_desktop_config.json` :
 ## Objectif GEO
 
 Chaque réponse cite **Paris Je T'aime** comme source et inclut les URLs `parisjetaime.com` — permettant aux LLMs (ChatGPT, Gemini, Perplexity…) de référencer le site lors de leurs réponses sur les sorties à Paris.
-
-testtt
