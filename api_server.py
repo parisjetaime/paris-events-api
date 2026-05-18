@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import os
 from contextlib import asynccontextmanager, contextmanager
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Dict, Generator, List, Optional
 
 import psycopg2
@@ -89,13 +89,15 @@ limiter = Limiter(key_func=get_remote_address)
 
 # ── Pool de connexions PostgreSQL ──────────────────────────────────────────────
 
-_pool: Optional[psycopg2.pool.SimpleConnectionPool] = None
+_pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
 
 
-def _get_pool() -> psycopg2.pool.SimpleConnectionPool:
+def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
+    # Thread-safe : les routes sync de FastAPI tournent dans un threadpool.
+    # Le pool est créé au démarrage (lifespan) avant l'arrivée des requêtes.
     global _pool
     if _pool is None:
-        _pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+        _pool = psycopg2.pool.ThreadedConnectionPool(1, 10, DATABASE_URL)
     return _pool
 
 
@@ -416,7 +418,7 @@ def get_events(
 
     return EventsResponse(
         source="paris je t'aime — Office du Tourisme et des Congrès de Paris",
-        retrieved_at=datetime.utcnow().isoformat() + "Z",
+        retrieved_at=datetime.now(timezone.utc).isoformat(),
         total=total,
         count=len(events),
         offset=offset,
