@@ -10,3 +10,4 @@ __pycache__/
 *.md
 migrate.py
 mcp_server.py
+requirements.txt

@@ -11,9 +11,9 @@ api.parisjetaime.com {
         -Server
     }
 
-    # Logs
+    # Logs vers stdout (visibles via docker compose logs)
     log {
-        output file /var/log/caddy/access.log
+        output stdout
         format json
     }
 }
