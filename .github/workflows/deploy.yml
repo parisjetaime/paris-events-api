@@ -87,16 +87,21 @@ jobs:
 
             docker compose ps
 
-            # Health check avec retry (30s max)
+            # Health check via Docker exec (port 8000 non exposé au host)
             echo "⏳ Waiting for API to be ready..."
             for i in $(seq 1 6); do
-              if curl -sf http://localhost:8000/health > /dev/null; then
-                echo "✅ API is healthy"
+              STATUS=$(docker compose exec api python -c \
+                "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())" \
+                2>/dev/null || echo "")
+              if echo "$STATUS" | grep -q '"status":"ok"'; then
+                echo "✅ API is healthy: $STATUS"
                 break
               fi
               echo "Attempt $i/6 failed, retrying in 5s..."
               sleep 5
             done
 
-            curl -sf http://localhost:8000/health || { echo "❌ Health check failed"; exit 1; }
+            docker compose exec api python -c \
+              "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/health'); print(r.read().decode())" \
+              || { echo "❌ Health check failed"; exit 1; }
           EOF
