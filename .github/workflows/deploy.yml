@@ -27,7 +27,7 @@ jobs:
             --exclude='myenv' \
             --exclude='venv' \
             --exclude='__pycache__' \
-            -czf release.tar.gz .
+            -czf "$RUNNER_TEMP/release.tar.gz" .
 
       - name: Setup SSH
         run: |
@@ -38,7 +38,7 @@ jobs:
 
       - name: Upload project to VPS
         run: |
-          scp -i ~/.ssh/deploy_key release.tar.gz ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release.tar.gz
+          scp -i ~/.ssh/deploy_key "$RUNNER_TEMP/release.tar.gz" ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release.tar.gz
 
       - name: Deploy on VPS
         run: |
