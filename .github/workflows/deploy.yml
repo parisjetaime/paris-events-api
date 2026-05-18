@@ -38,24 +38,31 @@ jobs:
 
       - name: Upload project to VPS
         run: |
-          scp -i ~/.ssh/deploy_key "$RUNNER_TEMP/release.tar.gz" ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release.tar.gz
+          scp -i ~/.ssh/deploy_key \
+            -P ${{ secrets.VPS_PORT }} \
+            "$RUNNER_TEMP/release.tar.gz" \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release.tar.gz
 
       - name: Deploy on VPS
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
 
             PROJECT_PATH="${{ secrets.PROJECT_PATH }}"
 
             if [ -z "$PROJECT_PATH" ]; then
-              echo "PROJECT_PATH is empty"
+              echo "❌ PROJECT_PATH is empty"
               exit 1
             fi
 
             case "$PROJECT_PATH" in
               /opt/*) ;;
+              /home/*) ;;
+              /root/*) ;;
               *)
-                echo "PROJECT_PATH must be inside /opt"
+                echo "❌ PROJECT_PATH not allowed: $PROJECT_PATH"
                 exit 1
                 ;;
             esac
@@ -64,7 +71,7 @@ jobs:
             cd "$PROJECT_PATH"
 
             if [ "$PWD" != "$PROJECT_PATH" ]; then
-              echo "Wrong deployment directory"
+              echo "❌ Wrong deployment directory"
               exit 1
             fi
 
@@ -76,11 +83,20 @@ jobs:
             tar -xzf /tmp/release.tar.gz -C "$PROJECT_PATH"
             rm -f /tmp/release.tar.gz
 
-            docker compose up -d --build --remove-orphans
+            docker compose up -d --build --remove-orphans api
 
             docker compose ps
 
-            sleep 5
+            # Health check avec retry (30s max)
+            echo "⏳ Waiting for API to be ready..."
+            for i in $(seq 1 6); do
+              if curl -sf http://localhost:8000/health > /dev/null; then
+                echo "✅ API is healthy"
+                break
+              fi
+              echo "Attempt $i/6 failed, retrying in 5s..."
+              sleep 5
+            done
 
-            curl -f http://localhost:8000/health || true
+            curl -sf http://localhost:8000/health || { echo "❌ Health check failed"; exit 1; }
           EOF
