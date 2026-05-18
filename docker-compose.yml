@@ -15,6 +15,23 @@ services:
       timeout: 10s
       retries: 3
 
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: paris-events-mcp
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "8001"
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/mcp')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   caddy:
     image: caddy:2-alpine
     container_name: paris-events-caddy

@@ -9,5 +9,4 @@ __pycache__/
 .gitignore
 *.md
 migrate.py
-mcp_server.py
 requirements.txt

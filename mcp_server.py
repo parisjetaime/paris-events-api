@@ -2,18 +2,18 @@
 mcp_server.py
 =============
 Serveur MCP Paris Je T'aime — expose les événements parisiens scorés
-aux assistants IA (Claude Desktop, ChatGPT, Gemini).
+aux assistants IA (Claude Desktop, Claude.ai, ChatGPT, Gemini).
 Données depuis Supabase (PostgreSQL).
 
-Usage :
-    python mcp_server.py
+Transport : streamable-http (remote, déployé sur VPS)
+Endpoint  : https://mcp.parisjetaime.com/mcp
 
-Déclaration dans Claude Desktop (claude_desktop_config.json) :
+Connexion Claude Desktop (remote) :
     {
       "mcpServers": {
         "paris-events": {
-          "command": "python",
-          "args": ["C:/Users/taroua/Documents/paris-events-api/mcp_server.py"]
+          "type": "http",
+          "url": "https://mcp.parisjetaime.com/mcp"
         }
       }
     }
@@ -53,6 +53,8 @@ load_dotenv(override=False)
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIN_SCORE    = float(os.getenv("MCP_MIN_SCORE", "40"))
 MAX_RESULTS  = int(os.getenv("MCP_MAX_RESULTS", "20"))
+MCP_PORT     = int(os.getenv("MCP_PORT", "8001"))
+MCP_HOST     = os.getenv("MCP_HOST", "0.0.0.0")
 ARTICLES_DIR = Path(__file__).parent / "data" / "ai_articles"
 
 # Noms des mois en français (module-level, construit une seule fois)
@@ -85,13 +87,13 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
 
 # ── Pool de connexions PostgreSQL ──────────────────────────────────────────────
 
-_pool: Optional[psycopg2.pool.SimpleConnectionPool] = None
+_pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
 
 
-def _get_pool() -> psycopg2.pool.SimpleConnectionPool:
+def _get_pool() -> psycopg2.pool.ThreadedConnectionPool:
     global _pool
     if _pool is None:
-        _pool = psycopg2.pool.SimpleConnectionPool(1, 5, DATABASE_URL)
+        _pool = psycopg2.pool.ThreadedConnectionPool(1, 10, DATABASE_URL)
     return _pool
 
 
@@ -749,4 +751,5 @@ async def paris_get_stats(ctx: Context) -> str:
 # ── Lancement ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    mcp.run()
+    _log("startup", {"transport": "streamable-http", "host": MCP_HOST, "port": MCP_PORT})
+    mcp.run(transport="streamable-http", host=MCP_HOST, port=MCP_PORT)
