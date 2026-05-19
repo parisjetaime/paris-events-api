@@ -14,7 +14,7 @@ api.parisjetaime.com {
     }
 }
 
-mcp.parisjetaime.com {
+preprod-mcp.parisinfo.com {
     reverse_proxy mcp:8001
 
     header {

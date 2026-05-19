@@ -83,18 +83,18 @@ jobs:
             tar -xzf /tmp/release.tar.gz -C "$PROJECT_PATH"
             rm -f /tmp/release.tar.gz
 
-            docker compose up -d --build --remove-orphans api
+            docker compose up -d --build --remove-orphans
 
             docker compose ps
 
-            # Health check via Docker exec (port 8000 non exposé au host)
+            # Health check API
             echo "⏳ Waiting for API to be ready..."
             for i in $(seq 1 6); do
               STATUS=$(docker compose exec api python -c \
                 "import urllib.request; print(urllib.request.urlopen('http://localhost:8000/health').read().decode())" \
                 2>/dev/null || echo "")
               if echo "$STATUS" | grep -q '"status":"ok"'; then
-                echo "✅ API is healthy: $STATUS"
+                echo "✅ API healthy: $STATUS"
                 break
               fi
               echo "Attempt $i/6 failed, retrying in 5s..."
@@ -103,5 +103,18 @@ jobs:
 
             docker compose exec api python -c \
               "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/health'); print(r.read().decode())" \
-              || { echo "❌ Health check failed"; exit 1; }
+              || { echo "❌ API health check failed"; exit 1; }
+
+            # Health check MCP
+            echo "⏳ Waiting for MCP to be ready..."
+            for i in $(seq 1 6); do
+              if docker compose exec mcp python -c \
+                "import urllib.request; urllib.request.urlopen('http://localhost:8001/mcp')" \
+                2>/dev/null; then
+                echo "✅ MCP healthy"
+                break
+              fi
+              echo "Attempt $i/6 failed, retrying in 5s..."
+              sleep 5
+            done
           EOF
