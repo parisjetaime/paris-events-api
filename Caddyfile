@@ -1,18 +1,14 @@
-api.parisjetaime.com {
-    reverse_proxy api:8000
-
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-        -Server
-    }
-
-    log {
-        output stdout
-        format json
-    }
-}
+# api.parisjetaime.com — à activer quand le DNS est configuré
+# api.parisjetaime.com {
+#     reverse_proxy api:8000
+#     header {
+#         X-Content-Type-Options nosniff
+#         X-Frame-Options DENY
+#         Referrer-Policy strict-origin-when-cross-origin
+#         -Server
+#     }
+#     log { output stdout; format json }
+# }
 
 preprod-mcp.parisinfo.com {
     reverse_proxy mcp:8001 {
