@@ -754,4 +754,10 @@ if __name__ == "__main__":
     import uvicorn
     _log("startup", {"transport": "streamable-http", "host": MCP_HOST, "port": MCP_PORT})
     app = mcp.streamable_http_app()
-    uvicorn.run(app, host=MCP_HOST, port=MCP_PORT)
+    uvicorn.run(
+        app,
+        host=MCP_HOST,
+        port=MCP_PORT,
+        proxy_headers=True,
+        forwarded_allow_ips="*",
+    )
