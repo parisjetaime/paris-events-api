@@ -38,6 +38,7 @@ import psycopg2.extras
 import psycopg2.pool
 from dotenv import load_dotenv
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -378,6 +379,27 @@ mcp = FastMCP(
         "Aujourd'hui : " + date.today().isoformat()
     ),
     lifespan=app_lifespan,
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=[
+            "localhost",
+            "localhost:*",
+            "127.0.0.1",
+            "127.0.0.1:*",
+            "mcp",
+            "mcp:*",
+            "preprod-mcp.parisinfo.com",
+            "preprod-mcp.parisinfo.com:*",
+            "mcp.parisjetaime.com",
+            "mcp.parisjetaime.com:*",
+        ],
+        allowed_origins=[
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://preprod-mcp.parisinfo.com",
+            "https://mcp.parisjetaime.com",
+        ],
+    ),
 )
 
 
@@ -750,27 +772,11 @@ async def paris_get_stats(ctx: Context) -> str:
 
 # ── Lancement ──────────────────────────────────────────────────────────────────
 
-class _HostBypassMiddleware:
-    """Remplace le host header par 'localhost' avant FastMCP pour bypasser sa validation."""
-
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] in ("http", "websocket"):
-            scope["headers"] = [
-                (b"host", b"localhost") if k.lower() == b"host" else (k, v)
-                for k, v in scope.get("headers", [])
-            ]
-        await self.app(scope, receive, send)
-
-
 if __name__ == "__main__":
     import uvicorn
     _log("startup", {"transport": "streamable-http", "host": MCP_HOST, "port": MCP_PORT})
-    app = _HostBypassMiddleware(mcp.streamable_http_app())
     uvicorn.run(
-        app,
+        mcp.streamable_http_app(),
         host=MCP_HOST,
         port=MCP_PORT,
         proxy_headers=True,
