@@ -750,10 +750,25 @@ async def paris_get_stats(ctx: Context) -> str:
 
 # ── Lancement ──────────────────────────────────────────────────────────────────
 
+class _HostBypassMiddleware:
+    """Remplace le host header par 'localhost' avant FastMCP pour bypasser sa validation."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            scope["headers"] = [
+                (b"host", b"localhost") if k.lower() == b"host" else (k, v)
+                for k, v in scope.get("headers", [])
+            ]
+        await self.app(scope, receive, send)
+
+
 if __name__ == "__main__":
     import uvicorn
     _log("startup", {"transport": "streamable-http", "host": MCP_HOST, "port": MCP_PORT})
-    app = mcp.streamable_http_app()
+    app = _HostBypassMiddleware(mcp.streamable_http_app())
     uvicorn.run(
         app,
         host=MCP_HOST,

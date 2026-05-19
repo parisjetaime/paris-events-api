@@ -17,9 +17,7 @@ preprod-api.parisinfo.com {
 }
 
 preprod-mcp.parisinfo.com {
-    reverse_proxy mcp:8001 {
-        header_up Host localhost
-    }
+    reverse_proxy mcp:8001
 
     header {
         X-Content-Type-Options nosniff
