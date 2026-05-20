@@ -264,6 +264,11 @@ class StatsResponse(BaseModel):
     source:            str
 
 
+class CategoriesResponse(BaseModel):
+    source:     str
+    categories: List[str]
+
+
 class HealthResponse(BaseModel):
     status:   str
     server:   str
@@ -519,12 +524,13 @@ def get_event_detail(request: Request, event_id: str) -> EventDetail:
 
 @app.get(
     "/categories",
+    response_model=CategoriesResponse,
     summary="Liste des catégories disponibles",
     description="Retourne toutes les catégories utilisables pour filtrer /events.",
     tags=["Référentiel"],
 )
-def get_categories() -> dict:
-    return {"source": "paris je t'aime", "categories": CATEGORIES}
+def get_categories() -> CategoriesResponse:
+    return CategoriesResponse(source="Paris Je T'aime", categories=CATEGORIES)
 
 
 # ── GET /stats ─────────────────────────────────────────────────────────────────
