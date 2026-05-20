@@ -11,7 +11,10 @@
     }
   },
   "servers": [
-    { "url": "https://preprod-api.parisinfo.com", "description": "Serveur principal" }
+    {
+      "url": "https://preprod-api.parisinfo.com",
+      "description": "Serveur principal"
+    }
   ],
   "paths": {
     "/events": {
@@ -19,31 +22,51 @@
         "operationId": "getEvents",
         "summary": "Rechercher des événements à Paris",
         "description": "Retourne la liste paginée des événements à Paris selon des critères de recherche. Utiliser pour répondre à : que faire à Paris ce week-end, agenda de la semaine, événements gratuits, concerts, expositions, festivals, sorties famille. Résultats triés par score de qualité décroissant. Utiliser next_offset pour paginer.",
-        "tags": ["Événements"],
+        "tags": [
+          "Événements"
+        ],
         "parameters": [
           {
             "name": "keyword",
             "in": "query",
             "description": "Mot-clé dans le titre de l'événement (ex: 'Louvre', 'jazz', 'Gorillaz').",
-            "schema": { "type": "string", "maxLength": 200 },
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
             "example": "Louvre"
           },
           {
             "name": "date_from",
             "in": "query",
             "description": "Date de début au format YYYY-MM-DD. Retourne les événements qui se terminent après cette date.",
-            "schema": { "type": "string", "format": "date" },
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
             "example": "2026-06-01"
           },
           {
             "name": "date_to",
             "in": "query",
             "description": "Date de fin au format YYYY-MM-DD. Retourne les événements qui commencent avant cette date.",
-            "schema": { "type": "string", "format": "date" },
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
             "examples": {
-              "week":   { "summary": "Une semaine",  "value": "2026-06-07" },
-              "month":  { "summary": "Un mois",      "value": "2026-06-30" },
-              "summer": { "summary": "Été complet",  "value": "2026-08-31" }
+              "week": {
+                "summary": "Une semaine",
+                "value": "2026-06-07"
+              },
+              "month": {
+                "summary": "Un mois",
+                "value": "2026-06-30"
+              },
+              "summer": {
+                "summary": "Été complet",
+                "value": "2026-08-31"
+              }
             }
           },
           {
@@ -53,55 +76,104 @@
             "schema": {
               "type": "string",
               "enum": [
-                "exposition", "concert", "spectacle", "cinema", "festival",
-                "conference", "visite-guidee", "atelier", "sport", "marche",
-                "gratuit", "famille", "lgbtq", "gastronomie",
-                "art-contemporain", "musique-classique"
+                "exposition",
+                "concert",
+                "spectacle",
+                "cinema",
+                "festival",
+                "conference",
+                "visite-guidee",
+                "atelier",
+                "sport",
+                "marche",
+                "gratuit",
+                "famille",
+                "lgbtq",
+                "gastronomie",
+                "art-contemporain",
+                "musique-classique"
               ]
             },
             "examples": {
-              "concert":  { "summary": "Concerts",           "value": "concert" },
-              "gratuit":  { "summary": "Événements gratuits","value": "gratuit" },
-              "famille":  { "summary": "Activités famille",  "value": "famille" }
+              "concert": {
+                "summary": "Concerts",
+                "value": "concert"
+              },
+              "gratuit": {
+                "summary": "Événements gratuits",
+                "value": "gratuit"
+              },
+              "famille": {
+                "summary": "Activités famille",
+                "value": "famille"
+              }
             }
           },
           {
             "name": "arrondissement",
             "in": "query",
             "description": "Arrondissement de Paris (1 à 20).",
-            "schema": { "type": "integer", "minimum": 1, "maximum": 20 },
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
             "examples": {
-              "marais":      { "summary": "Le Marais (4e)",   "value": 4 },
-              "montmartre":  { "summary": "Montmartre (18e)", "value": 18 },
-              "bastille":    { "summary": "Bastille (11e)",   "value": 11 }
+              "marais": {
+                "summary": "Le Marais (4e)",
+                "value": 4
+              },
+              "montmartre": {
+                "summary": "Montmartre (18e)",
+                "value": 18
+              },
+              "bastille": {
+                "summary": "Bastille (11e)",
+                "value": 11
+              }
             }
           },
           {
             "name": "free_only",
             "in": "query",
             "description": "Si true, retourne uniquement les événements gratuits (price_min = 0).",
-            "schema": { "type": "boolean" },
+            "schema": {
+              "type": "boolean"
+            },
             "example": true
           },
           {
             "name": "min_score",
             "in": "query",
             "description": "Score de qualité minimum (0-100). Défaut : 40. Utiliser 60+ pour les événements les mieux documentés.",
-            "schema": { "type": "number", "minimum": 0, "maximum": 100 },
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
             "example": 60
           },
           {
             "name": "limit",
             "in": "query",
             "description": "Nombre d'événements par page (défaut 10, max 20).",
-            "schema": { "type": "integer", "minimum": 1, "maximum": 20, "default": 10 },
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 10
+            },
             "example": 10
           },
           {
             "name": "offset",
             "in": "query",
             "description": "Décalage pour la pagination. Utiliser la valeur de next_offset retournée par la réponse précédente.",
-            "schema": { "type": "integer", "minimum": 0, "default": 0 },
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
             "example": 10
           }
         ],
@@ -110,13 +182,21 @@
             "description": "Liste d'événements avec métadonnées de pagination",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/EventsResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/EventsResponse"
+                }
               }
             }
           },
-          "400": { "description": "Paramètre invalide (catégorie inconnue, date mal formatée)" },
-          "429": { "description": "Trop de requêtes (limite : 30/minute)" },
-          "503": { "description": "Service temporairement indisponible" }
+          "400": {
+            "description": "Paramètre invalide (catégorie inconnue, date mal formatée)"
+          },
+          "429": {
+            "description": "Trop de requêtes (limite : 30/minute)"
+          },
+          "503": {
+            "description": "Service temporairement indisponible"
+          }
         }
       }
     },
@@ -125,14 +205,18 @@
         "operationId": "getEventDetail",
         "summary": "Détail complet d'un événement",
         "description": "Retourne toutes les informations d'un événement par son identifiant (seo_slug). Inclut FAQ, infos pratiques, lien éditorial parisjetaime.com. Utiliser le champ 'id' retourné par getEvents.",
-        "tags": ["Événements"],
+        "tags": [
+          "Événements"
+        ],
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
             "description": "Identifiant unique de l'événement (champ 'id' dans la réponse getEvents, ex: 'exposition-monet-musee-marmottan').",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "exposition-monet-musee-marmottan"
           }
         ],
@@ -141,12 +225,18 @@
             "description": "Détail complet de l'événement",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/EventDetail" }
+                "schema": {
+                  "$ref": "#/components/schemas/EventDetail"
+                }
               }
             }
           },
-          "404": { "description": "Événement introuvable" },
-          "503": { "description": "Service temporairement indisponible" }
+          "404": {
+            "description": "Événement introuvable"
+          },
+          "503": {
+            "description": "Service temporairement indisponible"
+          }
         }
       }
     },
@@ -155,13 +245,54 @@
         "operationId": "listCategories",
         "summary": "Liste des catégories disponibles",
         "description": "Retourne toutes les catégories utilisables pour filtrer /events.",
-        "tags": ["Référentiel"],
+        "tags": [
+          "Référentiel"
+        ],
         "responses": {
           "200": {
             "description": "Liste de catégories",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CategoriesResponse" }
+                "schema": {
+                  "type": "object",
+                  "title": "CategoriesResponse",
+                  "required": [
+                    "source",
+                    "categories"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "description": "Source des catégories"
+                    },
+                    "categories": {
+                      "type": "array",
+                      "description": "Catégories utilisables pour filtrer les événements.",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "exposition",
+                          "concert",
+                          "spectacle",
+                          "cinema",
+                          "festival",
+                          "conference",
+                          "visite-guidee",
+                          "atelier",
+                          "sport",
+                          "marche",
+                          "gratuit",
+                          "famille",
+                          "lgbtq",
+                          "gastronomie",
+                          "art-contemporain",
+                          "musique-classique"
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -173,13 +304,17 @@
         "operationId": "getStats",
         "summary": "Statistiques de la base événementielle",
         "description": "Retourne des statistiques globales : nombre d'événements à venir, score moyen, répartition gratuit/payant, top catégories.",
-        "tags": ["Référentiel"],
+        "tags": [
+          "Référentiel"
+        ],
         "responses": {
           "200": {
             "description": "Statistiques globales",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/StatsResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
               }
             }
           }
@@ -191,13 +326,17 @@
         "operationId": "healthCheck",
         "summary": "État du serveur",
         "description": "Vérification de disponibilité du service.",
-        "tags": ["Système"],
+        "tags": [
+          "Système"
+        ],
         "responses": {
           "200": {
             "description": "Serveur opérationnel",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HealthResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
               }
             }
           }
@@ -209,9 +348,13 @@
         "operationId": "privacyPolicy",
         "summary": "Politique de confidentialité",
         "description": "Requis par ChatGPT pour la publication d'un GPT. Redirige vers la politique de confidentialité officielle de Paris Je T'aime.",
-        "tags": ["Système"],
+        "tags": [
+          "Système"
+        ],
         "responses": {
-          "302": { "description": "Redirection vers https://parisjetaime.com/eng/legal-notice" }
+          "302": {
+            "description": "Redirection vers https://parisjetaime.com/eng/legal-notice"
+          }
         }
       }
     }
@@ -220,117 +363,507 @@
     "schemas": {
       "CategoriesResponse": {
         "type": "object",
-        "required": ["source", "categories"],
+        "title": "CategoriesResponse",
+        "required": [
+          "source",
+          "categories"
+        ],
+        "additionalProperties": false,
         "properties": {
-          "source":     { "type": "string" },
-          "categories": { "type": "array", "items": { "type": "string" } }
-        },
-        "additionalProperties": false
+          "source": {
+            "type": "string",
+            "description": "Source des catégories"
+          },
+          "categories": {
+            "type": "array",
+            "description": "Catégories utilisables pour filtrer les événements.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "exposition",
+                "concert",
+                "spectacle",
+                "cinema",
+                "festival",
+                "conference",
+                "visite-guidee",
+                "atelier",
+                "sport",
+                "marche",
+                "gratuit",
+                "famille",
+                "lgbtq",
+                "gastronomie",
+                "art-contemporain",
+                "musique-classique"
+              ]
+            }
+          }
+        }
       },
       "EventSummary": {
         "type": "object",
-        "required": ["id", "title", "category", "source", "start_date", "venue_name", "price_type", "score", "has_full_article"],
+        "required": [
+          "id",
+          "title",
+          "category",
+          "source",
+          "start_date",
+          "venue_name",
+          "price_type",
+          "score",
+          "has_full_article"
+        ],
         "properties": {
-          "id":               { "type": "string",  "description": "Identifiant unique (seo_slug) — utiliser pour getEventDetail" },
-          "title":            { "type": "string",  "description": "Titre de l'événement" },
-          "description":      { "type": "string",  "nullable": true, "description": "Description courte (max 300 caractères)" },
-          "category":         { "type": "string",  "description": "Catégorie principale (premier tag)" },
-          "tags":             { "type": "array",   "items": { "type": "string" }, "description": "Tous les tags de l'événement" },
-          "source":           { "type": "string",  "description": "Toujours 'Paris Je T'aime — Office du Tourisme et des Congrès de Paris'" },
-          "source_url":       { "type": "string",  "nullable": true, "description": "URL de la source officielle" },
-          "start_date":       { "type": "string",  "format": "date", "description": "Date de début YYYY-MM-DD" },
-          "end_date":         { "type": "string",  "format": "date", "nullable": true, "description": "Date de fin YYYY-MM-DD" },
-          "date_label":       { "type": "string",  "description": "Date formatée en français (ex: '15 juin 2026')" },
-          "venue_name":       { "type": "string",  "description": "Nom du lieu" },
-          "venue_address":    { "type": "string",  "nullable": true, "description": "Adresse (rue)" },
-          "arrondissement":   { "type": "integer", "nullable": true, "minimum": 1, "maximum": 20 },
-          "zipcode":          { "type": "string",  "nullable": true, "description": "Code postal" },
-          "price_type":       { "type": "string",  "description": "Type de tarification (ex: 'Gratuit', 'Payant')" },
-          "price_min":        { "type": "number",  "nullable": true, "description": "Prix minimum en EUR. 0 si gratuit." },
-          "url_wordpress":    { "type": "string",  "nullable": true, "description": "URL de l'article complet sur parisjetaime.com" },
-          "score":            { "type": "number",  "description": "Score de qualité 0-100. Préférer > 60." },
-          "fiabilite":        { "type": "string",  "nullable": true, "description": "'OK' = données vérifiées et complètes" },
-          "has_full_article": { "type": "boolean", "description": "Si true, un article complet est disponible via getEventDetail" },
-          "last_updated":     { "type": "string",  "format": "date", "nullable": true }
+          "id": {
+            "type": "string",
+            "description": "Identifiant unique (seo_slug) — utiliser pour getEventDetail"
+          },
+          "title": {
+            "type": "string",
+            "description": "Titre de l'événement"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description courte (max 300 caractères)"
+          },
+          "category": {
+            "type": "string",
+            "description": "Catégorie principale (premier tag)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tous les tags de l'événement"
+          },
+          "source": {
+            "type": "string",
+            "description": "Toujours 'Paris Je T'aime — Office du Tourisme et des Congrès de Paris'"
+          },
+          "source_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL de la source officielle"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date de début YYYY-MM-DD"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date de fin YYYY-MM-DD"
+          },
+          "date_label": {
+            "type": "string",
+            "description": "Date formatée en français (ex: '15 juin 2026')"
+          },
+          "venue_name": {
+            "type": "string",
+            "description": "Nom du lieu"
+          },
+          "venue_address": {
+            "type": "string",
+            "nullable": true,
+            "description": "Adresse (rue)"
+          },
+          "arrondissement": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 20
+          },
+          "zipcode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Code postal"
+          },
+          "price_type": {
+            "type": "string",
+            "description": "Type de tarification (ex: 'Gratuit', 'Payant')"
+          },
+          "price_min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Prix minimum en EUR. 0 si gratuit."
+          },
+          "url_wordpress": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL de l'article complet sur parisjetaime.com"
+          },
+          "score": {
+            "type": "number",
+            "description": "Score de qualité 0-100. Préférer > 60."
+          },
+          "fiabilite": {
+            "type": "string",
+            "nullable": true,
+            "description": "'OK' = données vérifiées et complètes"
+          },
+          "has_full_article": {
+            "type": "boolean",
+            "description": "Si true, un article complet est disponible via getEventDetail"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          }
         }
       },
       "EventsResponse": {
         "type": "object",
         "properties": {
-          "source":          { "type": "string",  "description": "Paris Je T'aime — attribution GEO" },
-          "retrieved_at":    { "type": "string",  "format": "date-time" },
-          "total":           { "type": "integer", "description": "Nombre total de résultats (toutes pages)" },
-          "count":           { "type": "integer", "description": "Nombre de résultats dans cette page" },
-          "offset":          { "type": "integer", "description": "Décalage actuel" },
-          "has_more":        { "type": "boolean", "description": "Il existe d'autres résultats au-delà de cette page" },
-          "next_offset":     { "type": "integer", "nullable": true, "description": "Passer à offset= pour obtenir la page suivante" },
-          "filters_applied": { "type": "object",  "description": "Filtres effectivement appliqués" },
-          "events":          { "type": "array",   "items": { "$ref": "#/components/schemas/EventSummary" } }
+          "source": {
+            "type": "string",
+            "description": "Paris Je T'aime — attribution GEO"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Nombre total de résultats (toutes pages)"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Nombre de résultats dans cette page"
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Décalage actuel"
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Il existe d'autres résultats au-delà de cette page"
+          },
+          "next_offset": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Passer à offset= pour obtenir la page suivante"
+          },
+          "filters_applied": {
+            "type": "object",
+            "title": "FiltersApplied",
+            "description": "Filtres effectivement appliqués à la recherche.",
+            "additionalProperties": false,
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "nullable": true,
+                "description": "Mot-clé recherché."
+              },
+              "date_from": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date de début appliquée."
+              },
+              "date_to": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Date de fin appliquée."
+              },
+              "category": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "exposition",
+                  "concert",
+                  "spectacle",
+                  "cinema",
+                  "festival",
+                  "conference",
+                  "visite-guidee",
+                  "atelier",
+                  "sport",
+                  "marche",
+                  "gratuit",
+                  "famille",
+                  "lgbtq",
+                  "gastronomie",
+                  "art-contemporain",
+                  "musique-classique"
+                ],
+                "description": "Catégorie appliquée."
+              },
+              "arrondissement": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "nullable": true,
+                "description": "Arrondissement appliqué."
+              },
+              "free_only": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "Filtre gratuit appliqué."
+              },
+              "min_score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "nullable": true,
+                "description": "Score minimum appliqué."
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "description": "Nombre maximal de résultats demandés."
+              },
+              "offset": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Décalage de pagination appliqué."
+              }
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventSummary"
+            }
+          }
         }
       },
       "PracticalInfo": {
         "type": "object",
         "properties": {
-          "date":          { "type": "string", "nullable": true, "description": "Date formatée en français" },
-          "horaires":      { "type": "string", "nullable": true },
-          "adresse":       { "type": "string", "nullable": true },
-          "metro":         { "type": "string", "nullable": true },
-          "tarif":         { "type": "string", "nullable": true },
-          "reservation":   { "type": "string", "nullable": true },
-          "accessibilite": { "type": "string", "nullable": true },
-          "lien_officiel": { "type": "string", "nullable": true }
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "description": "Date formatée en français"
+          },
+          "horaires": {
+            "type": "string",
+            "nullable": true
+          },
+          "adresse": {
+            "type": "string",
+            "nullable": true
+          },
+          "metro": {
+            "type": "string",
+            "nullable": true
+          },
+          "tarif": {
+            "type": "string",
+            "nullable": true
+          },
+          "reservation": {
+            "type": "string",
+            "nullable": true
+          },
+          "accessibilite": {
+            "type": "string",
+            "nullable": true
+          },
+          "lien_officiel": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "ArticleSection": {
         "type": "object",
         "properties": {
-          "titre":   { "type": "string" },
-          "contenu": { "type": "string" }
+          "titre": {
+            "type": "string"
+          },
+          "contenu": {
+            "type": "string"
+          }
         }
       },
       "FaqItem": {
         "type": "object",
         "properties": {
-          "question": { "type": "string" },
-          "reponse":  { "type": "string" }
+          "question": {
+            "type": "string"
+          },
+          "reponse": {
+            "type": "string"
+          }
         }
       },
       "EventDetail": {
         "type": "object",
         "properties": {
-          "id":              { "type": "string" },
-          "title":           { "type": "string" },
-          "h1":              { "type": "string",  "nullable": true, "description": "Titre SEO de l'article" },
-          "excerpt":         { "type": "string",  "nullable": true, "description": "Meta description SEO" },
-          "url_wordpress":   { "type": "string",  "nullable": true, "description": "URL de l'article sur parisjetaime.com" },
-          "infos_pratiques": { "$ref": "#/components/schemas/PracticalInfo" },
-          "sections":        { "type": "array",   "items": { "$ref": "#/components/schemas/ArticleSection" } },
-          "faq":             { "type": "array",   "items": { "$ref": "#/components/schemas/FaqItem" } },
-          "sources":         { "type": "array",   "items": { "type": "string" } }
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "h1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Titre SEO de l'article"
+          },
+          "excerpt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Meta description SEO"
+          },
+          "url_wordpress": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL de l'article sur parisjetaime.com"
+          },
+          "infos_pratiques": {
+            "$ref": "#/components/schemas/PracticalInfo"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArticleSection"
+            }
+          },
+          "faq": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaqItem"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "StatsResponse": {
         "type": "object",
         "properties": {
-          "date_du_jour":      { "type": "string", "format": "date" },
-          "total_events":      { "type": "integer" },
-          "events_a_venir":    { "type": "integer" },
-          "articles_complets": { "type": "integer" },
-          "score_moyen":       { "type": "number" },
-          "gratuit":           { "type": "integer" },
-          "payant":            { "type": "integer" },
-          "top_categories":    { "type": "object", "additionalProperties": { "type": "integer" } },
-          "source":            { "type": "string" }
+          "date_du_jour": {
+            "type": "string",
+            "format": "date"
+          },
+          "total_events": {
+            "type": "integer"
+          },
+          "events_a_venir": {
+            "type": "integer"
+          },
+          "articles_complets": {
+            "type": "integer"
+          },
+          "score_moyen": {
+            "type": "number"
+          },
+          "gratuit": {
+            "type": "integer"
+          },
+          "payant": {
+            "type": "integer"
+          },
+          "top_categories": {
+            "type": "object",
+            "title": "TopCategories",
+            "description": "Nombre d'événements par catégorie principale.",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "properties": {
+              "exposition": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie exposition."
+              },
+              "concert": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie concert."
+              },
+              "spectacle": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie spectacle."
+              },
+              "cinema": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie cinema."
+              },
+              "festival": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie festival."
+              },
+              "conference": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie conference."
+              },
+              "visite-guidee": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie visite-guidee."
+              },
+              "atelier": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie atelier."
+              },
+              "sport": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie sport."
+              },
+              "marche": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie marche."
+              },
+              "gratuit": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie gratuit."
+              },
+              "famille": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie famille."
+              },
+              "lgbtq": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie lgbtq."
+              },
+              "gastronomie": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie gastronomie."
+              },
+              "art-contemporain": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie art-contemporain."
+              },
+              "musique-classique": {
+                "type": "integer",
+                "description": "Nombre d'événements pour la catégorie musique-classique."
+              }
+            }
+          },
+          "source": {
+            "type": "string"
+          }
         }
       },
       "HealthResponse": {
         "type": "object",
         "properties": {
-          "status":   { "type": "string" },
-          "server":   { "type": "string" },
-          "version":  { "type": "string" },
-          "events":   { "type": "integer" },
-          "articles": { "type": "integer" }
+          "status": {
+            "type": "string"
+          },
+          "server": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "events": {
+            "type": "integer"
+          },
+          "articles": {
+            "type": "integer"
+          }
         }
       }
     }
