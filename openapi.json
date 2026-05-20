@@ -253,46 +253,7 @@
             "description": "Liste de catégories",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "title": "CategoriesResponse",
-                  "required": [
-                    "source",
-                    "categories"
-                  ],
-                  "additionalProperties": false,
-                  "properties": {
-                    "source": {
-                      "type": "string",
-                      "description": "Source des catégories"
-                    },
-                    "categories": {
-                      "type": "array",
-                      "description": "Catégories utilisables pour filtrer les événements.",
-                      "items": {
-                        "type": "string",
-                        "enum": [
-                          "exposition",
-                          "concert",
-                          "spectacle",
-                          "cinema",
-                          "festival",
-                          "conference",
-                          "visite-guidee",
-                          "atelier",
-                          "sport",
-                          "marche",
-                          "gratuit",
-                          "famille",
-                          "lgbtq",
-                          "gastronomie",
-                          "art-contemporain",
-                          "musique-classique"
-                        ]
-                      }
-                    }
-                  }
-                }
+                "schema": { "$ref": "#/components/schemas/CategoriesResponse" }
               }
             }
           }
