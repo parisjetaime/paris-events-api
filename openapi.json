@@ -161,13 +161,7 @@
             "description": "Liste de catégories",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "source":     { "type": "string" },
-                    "categories": { "type": "array", "items": { "type": "string" } }
-                  }
-                }
+                "schema": { "$ref": "#/components/schemas/CategoriesResponse" }
               }
             }
           }
@@ -224,6 +218,15 @@
   },
   "components": {
     "schemas": {
+      "CategoriesResponse": {
+        "type": "object",
+        "required": ["source", "categories"],
+        "properties": {
+          "source":     { "type": "string" },
+          "categories": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      },
       "EventSummary": {
         "type": "object",
         "required": ["id", "title", "category", "source", "start_date", "venue_name", "price_type", "score", "has_full_article"],
