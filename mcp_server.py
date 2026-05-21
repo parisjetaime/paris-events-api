@@ -291,11 +291,13 @@ class GetEventsInput(BaseModel):
             "'visite-guidee', 'atelier', 'conference', 'lgbtq', 'gastronomie', 'gratuit'"
         ),
     )
-    arrondissement: Optional[int] = Field(
+    arrondissement: Optional[str] = Field(
         default=None,
-        description="Arrondissement parisien (1 à 20)",
-        ge=1,
-        le=20,
+        description="Arrondissement(s) parisien(s) 1-20, séparés par virgule (ex: '7' ou '1,7,8')",
+    )
+    scored_only: Optional[bool] = Field(
+        default=None,
+        description="Si true, retourne uniquement les événements scorés (is_scored=true)",
     )
     price_type: Optional[str] = Field(
         default=None,
@@ -468,8 +470,14 @@ async def paris_get_events(params: GetEventsInput, ctx: Context) -> str:
         sql_params.append(params.date_to)
 
     if params.arrondissement:
-        conditions.append("arrondissement = %s")
-        sql_params.append(params.arrondissement)
+        arr_list = [int(a.strip()) for a in params.arrondissement.split(",") if a.strip().isdigit()]
+        if arr_list:
+            placeholders = ", ".join(["%s"] * len(arr_list))
+            conditions.append(f"arrondissement IN ({placeholders})")
+            sql_params.extend(arr_list)
+
+    if params.scored_only:
+        conditions.append("is_scored = true")
 
     if params.price_type:
         if "gratuit" in params.price_type.lower():
@@ -489,7 +497,7 @@ async def paris_get_events(params: GetEventsInput, ctx: Context) -> str:
     try:
         with _db() as cur:
             # Total
-            cur.execute(f"SELECT COUNT(*) AS cnt FROM events WHERE {where}", sql_params)
+            cur.execute(f"SELECT COUNT(*) AS cnt FROM agenda WHERE {where}", sql_params)
             total = cur.fetchone()["cnt"]
 
             # Page
@@ -500,7 +508,7 @@ async def paris_get_events(params: GetEventsInput, ctx: Context) -> str:
                        address_name, address_street, address_zipcode, address_city,
                        arrondissement, price_type, price_min,
                        url_wordpress, score_final, fiabilite, audience, updated_at
-                FROM events
+                FROM agenda
                 WHERE {where}
                 ORDER BY score_final DESC
                 LIMIT %s OFFSET %s
@@ -583,7 +591,7 @@ async def paris_get_event_detail(params: GetEventDetailInput, ctx: Context) -> s
                        arrondissement, price_type, price_min,
                        url_wordpress, faq_paires,
                        source_name, source_url, audience
-                FROM events
+                FROM agenda
                 WHERE title ILIKE %s AND is_active = true
                 ORDER BY score_final DESC
                 LIMIT 1
@@ -701,6 +709,66 @@ async def paris_get_event_detail(params: GetEventDetailInput, ctx: Context) -> s
 
 
 @mcp.tool(
+    name="paris_get_top_events",
+    annotations={
+        "title": "Top 10 événements parisiens scorés",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def paris_get_top_events(ctx: Context) -> str:
+    """
+    Retourne les 10 meilleurs événements parisiens scorés et vérifiés,
+    triés par score décroissant. Aucun paramètre requis.
+    Utiliser pour : meilleurs événements du moment, sélection éditoriale,
+    coups de cœur Paris Je T'aime.
+
+    Returns:
+        str: Top 10 événements en Markdown avec scores et liens.
+    """
+    _log("paris_get_top_events")
+
+    try:
+        with _db() as cur:
+            cur.execute(
+                """
+                SELECT seo_slug, title, description, fap_tags,
+                       source_name, source_url, date_start, date_end,
+                       address_name, address_street, address_zipcode, address_city,
+                       arrondissement, price_type, price_min,
+                       url_wordpress, score_final, fiabilite, audience, updated_at
+                FROM agenda
+                WHERE is_active    = true
+                  AND is_scored    = true
+                  AND statut_date IN ('a_venir', 'en_cours')
+                  AND score_final  > 0
+                  AND (date_end >= CURRENT_DATE OR (date_end IS NULL AND date_start >= CURRENT_DATE - INTERVAL '1 day'))
+                ORDER BY score_final DESC
+                LIMIT 10
+                """
+            )
+            rows = cur.fetchall()
+    except Exception as e:
+        _log("paris_get_top_events_error", {"error": str(e)})
+        return json.dumps({"error": f"Erreur base de données : {e}"})
+
+    events: List[dict] = [_row_to_event(dict(r)) for r in rows]
+    _log("paris_get_top_events_ok", {"count": len(events)})
+
+    lines = [
+        f"# Top {len(events)} événements Paris Je T'aime — {date.today().strftime('%d/%m/%Y')}",
+        "",
+        "*Sélection des meilleurs événements scorés et vérifiés*",
+        "",
+    ]
+    for i, event in enumerate(events, 1):
+        lines.append(f"**#{i}** {_format_event_markdown(event)}")
+    return "\n".join(lines)
+
+
+@mcp.tool(
     name="paris_get_stats",
     annotations={
         "title": "Statistiques de la base Paris Je T'aime",
@@ -731,7 +799,7 @@ async def paris_get_stats(ctx: Context) -> str:
                     AVG(score_final) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND score_final >= %s)     AS score_moyen,
                     COUNT(*) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND price_min = 0)                 AS gratuit,
                     COUNT(*) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND price_type ILIKE '%%payant%%') AS payant
-                FROM events
+                FROM agenda
                 WHERE is_active = true
                 """,
                 [MIN_SCORE, MIN_SCORE],
@@ -741,7 +809,7 @@ async def paris_get_stats(ctx: Context) -> str:
             cur.execute(
                 """
                 SELECT unnest(fap_tags) AS tag, COUNT(*) AS cnt
-                FROM events
+                FROM agenda
                 WHERE is_active = true AND statut_date IN ('en_cours', 'a_venir')
                 GROUP BY tag
                 ORDER BY cnt DESC

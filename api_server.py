@@ -342,8 +342,9 @@ def get_events(
     date_from: Optional[str] = Query(None, description="Date de début YYYY-MM-DD", examples=["2026-06-01"]),
     date_to: Optional[str]   = Query(None, description="Date de fin YYYY-MM-DD",   examples=["2026-06-30"]),
     category: Optional[str]  = Query(None, description=f"Catégorie : {', '.join(CATEGORIES)}"),
-    arrondissement: Optional[int] = Query(None, description="Arrondissement (1-20)", ge=1, le=20),
+    arrondissement: Optional[str] = Query(None, description="Arrondissement(s) 1-20, séparés par virgule (ex: '1,7,8')"),
     free_only: Optional[bool] = Query(None, description="Uniquement les événements gratuits"),
+    scored_only: Optional[bool] = Query(None, description="Uniquement les événements scorés (is_scored=true)"),
     min_score: Optional[float] = Query(None, description="Score minimum (0-100)", ge=0, le=100),
     limit: int  = Query(10, description="Résultats par page (max 20)", ge=1, le=20),
     offset: int = Query(0,  description="Décalage pour la pagination", ge=0),
@@ -352,6 +353,16 @@ def get_events(
     if category and category not in CATEGORIES:
         raise HTTPException(400, f"Catégorie invalide. Valeurs acceptées : {', '.join(CATEGORIES)}")
 
+    # Parse arrondissements (accepte "7" ou "1,7,8")
+    arr_list: list[int] = []
+    if arrondissement:
+        try:
+            arr_list = [int(a.strip()) for a in arrondissement.split(",") if a.strip()]
+            if any(a < 1 or a > 20 for a in arr_list):
+                raise HTTPException(400, "Arrondissement invalide. Valeurs acceptées : 1 à 20.")
+        except ValueError:
+            raise HTTPException(400, "Format arrondissement invalide. Exemple : '7' ou '1,7,8'.")
+
     threshold = min_score if min_score is not None else MIN_SCORE
 
     # ── Conditions SQL dynamiques ──────────────────────────────────────────────
@@ -359,7 +370,6 @@ def get_events(
         "is_active = true",
         "statut_date IN ('en_cours', 'a_venir')",
         "score_final >= %s",
-        # Filet de sécurité : exclure les événements réellement terminés
         "(date_end >= CURRENT_DATE OR (date_end IS NULL AND date_start >= CURRENT_DATE - INTERVAL '1 day'))",
     ]
     params: list = [threshold]
@@ -369,7 +379,6 @@ def get_events(
         params.append(f"%{keyword}%")
 
     if date_from:
-        # L'événement se termine après date_from (ou commence après si pas de date_end)
         conditions.append("(date_end >= %s OR (date_end IS NULL AND date_start >= %s))")
         params.extend([date_from, date_from])
 
@@ -377,12 +386,16 @@ def get_events(
         conditions.append("date_start <= %s")
         params.append(date_to)
 
-    if arrondissement:
-        conditions.append("arrondissement = %s")
-        params.append(arrondissement)
+    if arr_list:
+        placeholders = ", ".join(["%s"] * len(arr_list))
+        conditions.append(f"arrondissement IN ({placeholders})")
+        params.extend(arr_list)
 
     if free_only:
         conditions.append("price_min = 0")
+
+    if scored_only:
+        conditions.append("is_scored = true")
 
     if category:
         kws = CATEGORY_KEYWORDS.get(category, [category])
@@ -394,11 +407,9 @@ def get_events(
 
     try:
         with _db() as cur:
-            # Compte total
-            cur.execute(f"SELECT COUNT(*) AS cnt FROM events WHERE {where}", params)
+            cur.execute(f"SELECT COUNT(*) AS cnt FROM agenda WHERE {where}", params)
             total = cur.fetchone()["cnt"]
 
-            # Page courante
             cur.execute(
                 f"""
                 SELECT seo_slug, title, description, fap_tags,
@@ -406,7 +417,7 @@ def get_events(
                        address_name, address_street, arrondissement, address_zipcode,
                        price_type, price_min, url_wordpress, score_final,
                        fiabilite, updated_at
-                FROM events
+                FROM agenda
                 WHERE {where}
                 ORDER BY score_final DESC
                 LIMIT %s OFFSET %s
@@ -435,11 +446,52 @@ def get_events(
             "date_to":        date_to or "sans limite",
             "category":       category,
             "arrondissement": arrondissement,
+            "scored_only":    scored_only or False,
             "free_only":      free_only or False,
             "min_score":      threshold,
         },
         events=events,
     )
+
+
+# ── GET /top ──────────────────────────────────────────────────────────────────
+
+@app.get(
+    "/top",
+    response_model=List[EventSummary],
+    summary="Top 10 événements scorés",
+    description=(
+        "Retourne les 10 meilleurs événements à venir ou en cours, "
+        "triés par score décroissant. Uniquement les événements avec is_scored=true."
+    ),
+    tags=["Événements"],
+)
+@limiter.limit("30/minute")
+def get_top_events(request: Request) -> List[EventSummary]:
+    try:
+        with _db() as cur:
+            cur.execute(
+                """
+                SELECT seo_slug, title, description, fap_tags,
+                       source_url, date_start, date_end,
+                       address_name, address_street, arrondissement, address_zipcode,
+                       price_type, price_min, url_wordpress, score_final,
+                       fiabilite, updated_at
+                FROM agenda
+                WHERE is_active    = true
+                  AND is_scored    = true
+                  AND statut_date IN ('a_venir', 'en_cours')
+                  AND score_final  > 0
+                  AND (date_end >= CURRENT_DATE OR (date_end IS NULL AND date_start >= CURRENT_DATE - INTERVAL '1 day'))
+                ORDER BY score_final DESC
+                LIMIT 10
+                """
+            )
+            rows = cur.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Service temporairement indisponible.")
+
+    return [EventSummary(**_row_to_summary(dict(r))) for r in rows]
 
 
 # ── GET /events/{id} ──────────────────────────────────────────────────────────
@@ -466,7 +518,7 @@ def get_event_detail(request: Request, event_id: str) -> EventDetail:
                        arrondissement, price_type, price_min,
                        url_wordpress, faq_paires,
                        source_url, updated_at
-                FROM events
+                FROM agenda
                 WHERE seo_slug = %s AND is_active = true
                 """,
                 (event_id,),
@@ -554,7 +606,7 @@ def get_stats(request: Request) -> StatsResponse:
                 AVG(score_final) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND score_final >= %s)    AS score_moyen,
                 COUNT(*) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND price_min = 0)                AS gratuit,
                 COUNT(*) FILTER (WHERE statut_date IN ('en_cours','a_venir') AND price_type ILIKE '%%payant%%') AS payant
-            FROM events
+            FROM agenda
             WHERE is_active = true
             """,
             [MIN_SCORE, MIN_SCORE],
@@ -564,7 +616,7 @@ def get_stats(request: Request) -> StatsResponse:
         cur.execute(
             """
             SELECT unnest(fap_tags) AS tag, COUNT(*) AS cnt
-            FROM events
+            FROM agenda
             WHERE is_active = true AND statut_date IN ('en_cours', 'a_venir')
             GROUP BY tag
             ORDER BY cnt DESC
@@ -601,7 +653,7 @@ def health() -> HealthResponse:
             SELECT
                 COUNT(*) AS total,
                 COUNT(*) FILTER (WHERE url_wordpress IS NOT NULL AND url_wordpress != '') AS with_article
-            FROM events
+            FROM agenda
             WHERE is_active = true
             """
         )

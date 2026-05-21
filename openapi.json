@@ -112,24 +112,22 @@
           {
             "name": "arrondissement",
             "in": "query",
-            "description": "Arrondissement de Paris (1 à 20).",
+            "description": "Arrondissement(s) de Paris 1-20, séparés par virgule pour en cibler plusieurs (ex: '7' ou '1,7,8').",
             "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 20
+              "type": "string"
             },
             "examples": {
-              "marais": {
+              "single": {
                 "summary": "Le Marais (4e)",
-                "value": 4
+                "value": "4"
               },
-              "montmartre": {
-                "summary": "Montmartre (18e)",
-                "value": 18
+              "multi": {
+                "summary": "Rive gauche (5e, 6e, 7e)",
+                "value": "5,6,7"
               },
-              "bastille": {
-                "summary": "Bastille (11e)",
-                "value": 11
+              "grands-quartiers": {
+                "summary": "Opéra / Grands Boulevards",
+                "value": "2,9,10"
               }
             }
           },
@@ -137,6 +135,15 @@
             "name": "free_only",
             "in": "query",
             "description": "Si true, retourne uniquement les événements gratuits (price_min = 0).",
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          },
+          {
+            "name": "scored_only",
+            "in": "query",
+            "description": "Si true, retourne uniquement les événements scorés et vérifiés (is_scored=true).",
             "schema": {
               "type": "boolean"
             },
@@ -193,6 +200,31 @@
           },
           "429": {
             "description": "Trop de requêtes (limite : 30/minute)"
+          },
+          "503": {
+            "description": "Service temporairement indisponible"
+          }
+        }
+      }
+    },
+    "/top": {
+      "get": {
+        "operationId": "getTopEvents",
+        "summary": "Top 10 événements scorés",
+        "description": "Retourne les 10 meilleurs événements parisiens à venir ou en cours, triés par score décroissant. Uniquement les événements avec is_scored=true. Aucun paramètre requis. Utiliser pour : meilleurs événements du moment, sélection éditoriale, coups de cœur Paris Je T'aime.",
+        "tags": ["Événements"],
+        "responses": {
+          "200": {
+            "description": "Top 10 événements scorés",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EventSummary" },
+                  "maxItems": 10
+                }
+              }
+            }
           },
           "503": {
             "description": "Service temporairement indisponible"
@@ -557,11 +589,14 @@
                 "description": "Catégorie appliquée."
               },
               "arrondissement": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 20,
+                "type": "string",
                 "nullable": true,
-                "description": "Arrondissement appliqué."
+                "description": "Arrondissement(s) appliqué(s), ex: '7' ou '1,7,8'."
+              },
+              "scored_only": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "Filtre is_scored appliqué."
               },
               "free_only": {
                 "type": "boolean",
