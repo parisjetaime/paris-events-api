@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Évaluation du serveur MCP Paris Je T'aime (paris-events-mcp)
+  =============================================================
+  10 questions complexes et réalistes pour tester si un LLM peut
+  utiliser efficacement les outils du MCP pour répondre.
+
+  Chaque question :
+    - Indépendante (ne dépend pas des autres)
+    - Read-only (utilise paris_get_events, paris_get_event_detail, paris_get_stats, paris_get_top_events)
+    - Complexe (requiert au moins 2 appels d'outils : recherche puis extraction)
+    - Réaliste (cas d'usage tourisme/culture parisien)
+    - Vérifiable (réponse unique comparable par string match)
+    - Stable (les faits événementiels ne changent pas une fois scrapés)
+
+  Outils disponibles :
+    - paris_get_events(keyword?, start_date?, end_date?, category?, arrondissement?, limit?, offset?)
+    - paris_get_event_detail(title)
+    - paris_get_top_events(limit?)
+    - paris_get_stats()
+-->
+<evaluation>
+
+  <qa_pair>
+    <question>Quel musée parisien accueille l'exposition consacrée à Michel-Ange et Rodin intitulée "Corps vivants" en 2026 ? Cherche dans l'agenda Paris Je T'aime.</question>
+    <answer>Musée du Louvre</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Le festival de musique "We Love Green 2026" est listé dans l'agenda Paris Je T'aime. Dans quel arrondissement de Paris se déroule-t-il ?</question>
+    <answer>12</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Quelle est la date de début (format AAAA-MM-JJ) de l'événement "Tour Auto 2026" qui se tient au Grand Palais à Paris ?</question>
+    <answer>2026-05-03</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Le "Carnaval Tropical de Paris 2026" qui défile sur les Champs-Élysées est-il un événement payant ou gratuit selon l'agenda Paris Je T'aime ? Réponds par "payant" ou "gratuit".</question>
+    <answer>gratuit</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>L'exposition photographique "Circulation(s) 2026" se tient dans quel établissement culturel parisien selon l'agenda Paris Je T'aime ?</question>
+    <answer>Le CENTQUATRE-PARIS (104)</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Le "Paris Globe Festival 2026" dédié à la danse, au théâtre et aux cultures du monde se déroule dans quel arrondissement de Paris selon l'agenda Paris Je T'aime ?</question>
+    <answer>14</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Dans quel musée parisien a lieu l'exposition "Splendeurs du baroque : de Greco à Velázquez" en 2026 ?</question>
+    <answer>Musée Jacquemart-André</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>À quelle date (format AAAA-MM-JJ) se termine l'exposition "Henri Rousseau, l'ambition de la peinture" au musée de l'Orangerie en 2026 ?</question>
+    <answer>2026-07-20</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>L'exposition "La Marine et les peintres : quatre siècles d'art et de pouvoir" est listée dans l'agenda Paris Je T'aime. Dans quel arrondissement de Paris se trouve le musée qui l'accueille ?</question>
+    <answer>16</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>À Paris en 2026, où se tient précisément l'événement "Fête de la Nature au parc de Bercy : lecture et jeux en plein air" selon l'agenda Paris Je T'aime ? Donne le nom exact du lieu d'accueil.</question>
+    <answer>Maison du Jardinage et du Compostage</answer>
+  </qa_pair>
+
+</evaluation>

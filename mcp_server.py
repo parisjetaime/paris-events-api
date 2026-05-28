@@ -56,14 +56,9 @@ MIN_SCORE    = float(os.getenv("MCP_MIN_SCORE", "40"))
 MAX_RESULTS  = int(os.getenv("MCP_MAX_RESULTS", "20"))
 MCP_PORT     = int(os.getenv("MCP_PORT", "8001"))
 MCP_HOST     = os.getenv("MCP_HOST", "0.0.0.0")
-ARTICLES_DIR = Path(__file__).parent / "data" / "ai_articles"
-
 # Noms des mois en français (module-level, construit une seule fois)
 _MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin",
          "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
-
-# Cache des articles JSON chargés depuis le disque
-_article_json_cache: Dict[str, Optional[dict]] = {}
 
 CATEGORY_KEYWORDS: Dict[str, List[str]] = {
     "exposition":        ["expo", "exposition", "peinture", "photo", "art contemporain", "sculpture"],
@@ -173,56 +168,16 @@ def _row_to_event(row: dict) -> dict:
     }
 
 
-def _load_article_json(slug: str) -> Optional[dict]:
-    """Charge l'article JSON depuis le dossier local (sections, FAQ enrichies). Résultat mis en cache."""
-    if slug in _article_json_cache:
-        return _article_json_cache[slug]
-
-    result = None
-    if ARTICLES_DIR.exists():
-        # Correspondance directe par nom de dossier
-        direct = ARTICLES_DIR / slug / "article.json"
-        if direct.exists():
-            try:
-                result = json.loads(direct.read_text(encoding="utf-8"))
-            except Exception:
-                pass
-
-        # Recherche par slug dans les métadonnées
-        if result is None:
-            for folder in ARTICLES_DIR.iterdir():
-                if not folder.is_dir():
-                    continue
-                json_file = folder / "article.json"
-                if not json_file.exists():
-                    continue
-                try:
-                    data = json.loads(json_file.read_text(encoding="utf-8"))
-                    art_slug = data.get("facts", {}).get("slug") or folder.name
-                    if art_slug == slug:
-                        result = data
-                        break
-                except Exception:
-                    continue
-
-    _article_json_cache[slug] = result  # cache hit ou miss (None)
-    return result
-
-
-def _extract_metro(article: dict) -> str:
-    facts = article.get("facts", {})
-    metro = facts.get("metro", "")
-    if metro:
-        return metro
-    for s in article.get("sections", []):
-        if "rendre" in s.get("heading", "").lower():
-            body = s.get("body", "")
-            m = re.search(r"ligne\s+(\d+)[^\n,\.]*station\s+([^\.]+?)[\.,]", body, re.I)
-            if m:
-                return f"Métro ligne {m.group(1)}, station {m.group(2).strip()}"
-            m = re.search(r"station\s+([^\.]+?)[\.,]", body, re.I)
-            if m:
-                return f"Station {m.group(1).strip()}"
+def _extract_metro_from_text(text: str) -> str:
+    """Extrait l'info métro depuis un texte (section 'Comment s'y rendre')."""
+    if not text:
+        return ""
+    m = re.search(r"ligne\s+(\d+)[^\n,\.]*station\s+([^\.]+?)[\.,]", text, re.I)
+    if m:
+        return f"Métro ligne {m.group(1)}, station {m.group(2).strip()}"
+    m = re.search(r"station\s+([^\.]+?)[\.,]", text, re.I)
+    if m:
+        return f"Station {m.group(1).strip()}"
     return ""
 
 
@@ -378,7 +333,7 @@ mcp = FastMCP(
         "Les scores vont de 0 à 100 — préfère les événements avec score > 60. "
         "fiabilite='OK' signifie que les infos sont complètes et vérifiées. "
         "Pour la pagination, utilise le champ next_offset retourné. "
-        "Aujourd'hui : " + date.today().isoformat()
+        "La date du jour est toujours retournée dans le champ 'date_du_jour' de chaque réponse — utilise-la comme référence."
     ),
     lifespan=app_lifespan,
     transport_security=TransportSecuritySettings(
@@ -589,7 +544,8 @@ async def paris_get_event_detail(params: GetEventDetailInput, ctx: Context) -> s
                        date_start, date_end,
                        address_name, address_street, address_zipcode, address_city,
                        arrondissement, price_type, price_min,
-                       url_wordpress, faq_paires,
+                       url_wordpress, faq_paires, aio_context,
+                       transports, website_url, booking_url,
                        source_name, source_url, audience
                 FROM agenda
                 WHERE title ILIKE %s AND is_active = true
@@ -629,22 +585,37 @@ async def paris_get_event_detail(params: GetEventDetailInput, ctx: Context) -> s
         if item.get("question")
     ]
 
-    # Enrichissement optionnel depuis l'article JSON local (sections, metro, etc.)
+    # Enrichissement depuis Supabase (aio_context = sections, bonus, etc.)
     sections: List[dict] = []
-    metro = ""
-    lien_officiel = ""
-    article_json = _load_article_json(slug)
-    if article_json:
-        facts         = article_json.get("facts", {})
-        metro         = facts.get("metro", "") or _extract_metro(article_json)
-        lien_officiel = facts.get("lien_officiel", "")
-        sections      = [
-            {"titre": s["heading"], "contenu": s["body"]}
-            for s in article_json.get("sections", [])
+    aio = row.get("aio_context") or {}
+    if isinstance(aio, str):
+        try:
+            aio = json.loads(aio)
+        except Exception:
+            aio = {}
+
+    if isinstance(aio, dict):
+        sections = [
+            {"titre": s.get("heading", ""), "contenu": s.get("body", "")}
+            for s in (aio.get("sections") or [])
+            if s.get("heading") and s.get("body")
         ]
-        # Compléter la FAQ si non présente en DB
-        if not faq and article_json.get("faq"):
-            faq = article_json["faq"]
+
+    # Métro : colonne dédiée, sinon extraction depuis la section "Comment s'y rendre"
+    metro = (row.get("transports") or "").strip()
+    if not metro and sections:
+        for s in sections:
+            if "rendre" in s["titre"].lower():
+                metro = _extract_metro_from_text(s["contenu"])
+                if metro:
+                    break
+
+    # Lien officiel : website_url > booking_url > source_url
+    lien_officiel = (
+        (row.get("website_url") or "").strip()
+        or (row.get("booking_url") or "").strip()
+        or (row.get("source_url") or "").strip()
+    )
 
     # Adresse complète
     adresse = " ".join(filter(None, [
