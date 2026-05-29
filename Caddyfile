@@ -1,31 +1,35 @@
 api.parisjetaime.com {
-    reverse_proxy api:8000 {
-        header_up Host localhost
-    }
+	reverse_proxy api:8000 {
+		header_up Host localhost
+	}
 
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-        -Server
-    }
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
 
-    log {
-        output stdout
-        format json
-    }
+	log {
+		output stdout
+		format json
+	}
 }
 
 mcp.parisjetaime.com {
-    reverse_proxy mcp:8001
+	# Permet d'accéder à MCP sur https://mcp.parisjetaime.com (sans /mcp)
+	@root path /
+	rewrite @root /mcp
 
-    header {
-        X-Content-Type-Options nosniff
-        -Server
-    }
+	reverse_proxy mcp:8001
 
-    log {
-        output stdout
-        format json
-    }
+	header {
+		X-Content-Type-Options nosniff
+		-Server
+	}
+
+	log {
+		output stdout
+		format json
+	}
 }
