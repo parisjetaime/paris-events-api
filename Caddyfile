@@ -1,4 +1,4 @@
-preprod-api.parisinfo.com {
+api.parisjetaime.com {
     reverse_proxy api:8000 {
         header_up Host localhost
     }
@@ -16,7 +16,7 @@ preprod-api.parisinfo.com {
     }
 }
 
-preprod-mcp.parisinfo.com {
+mcp.parisjetaime.com {
     reverse_proxy mcp:8001
 
     header {

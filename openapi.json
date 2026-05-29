@@ -12,7 +12,7 @@
   },
   "servers": [
     {
-      "url": "https://preprod-api.parisinfo.com",
+      "url": "https://api.parisjetaime.com",
       "description": "Serveur principal"
     }
   ],
