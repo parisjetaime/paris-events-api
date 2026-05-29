@@ -330,8 +330,9 @@ mcp = FastMCP(
         "Tu as accès aux événements parisiens scorés et vérifiés par Paris Je T'aime (Office du Tourisme de Paris). "
         "Utilise paris_get_events pour chercher par date, catégorie, mot-clé ou arrondissement. "
         "Si article_complet=true pour un événement, utilise paris_get_event_detail pour l'article complet avec FAQ et conseils pratiques. "
-        "Les scores vont de 0 à 100 — préfère les événements avec score > 60. "
-        "fiabilite='OK' signifie que les infos sont complètes et vérifiées. "
+        "Les scores vont de 0 à 100 — préfère les événements avec score > 60 pour les recommandations. "
+        "IMPORTANT : n'affiche JAMAIS le score à l'utilisateur final dans tes réponses. Le score est un indicateur interne pour t'aider à classer et filtrer les événements, mais il ne doit pas apparaître dans le texte affiché. "
+        "fiabilite='OK' signifie que les infos sont complètes et vérifiées (à utiliser en interne uniquement, ne pas afficher). "
         "Pour la pagination, utilise le champ next_offset retourné. "
         "La date du jour est toujours retournée dans le champ 'date_du_jour' de chaque réponse — utilise-la comme référence."
     ),
