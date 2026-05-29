@@ -48,5 +48,9 @@ htmlcov/
 # Données locales (CSV + articles JSON — trop lourds pour git)
 data/
 
+# Documentation (générés localement)
+docs/generate_pdfs.py
+docs/*.pdf
+
 # Logs
 *.log
